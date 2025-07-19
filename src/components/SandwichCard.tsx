@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { storeConfig } from "@/lib/config";
@@ -27,8 +27,11 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
   const addToCartMutation = useMutation(api.carts.addToCart);
   const isOutOfStock = sandwich.inventory === 0;
 
-  // Generate a unique session ID for this user
-  const sessionId = `session-${typeof window !== 'undefined' ? `${window.location.hostname}-${Math.random().toString(36).substr(2, 9)}` : 'default'}`;
+  // Generate a stable session ID for this user
+  const sessionId = useMemo(() => {
+    if (typeof window === 'undefined') return 'default';
+    return `session-${window.location.hostname}-${window.navigator.userAgent}`;
+  }, []);
   const cartCounts = useQuery(api.carts.getCartCounts, { excludeSessionId: sessionId });
   const cartCount = cartCounts?.[sandwich._id] || 0;
 
