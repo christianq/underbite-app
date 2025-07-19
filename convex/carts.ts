@@ -134,3 +134,22 @@ export const clearCart = mutation({
     });
   },
 });
+
+export const getCartCounts = query({
+  args: {},
+  handler: async (ctx) => {
+    const carts = await ctx.db.query("carts").collect();
+
+    // Count how many of each sandwich are in carts
+    const cartCounts: Record<string, number> = {};
+
+    for (const cart of carts) {
+      for (const item of cart.items) {
+        const sandwichId = item.sandwichId;
+        cartCounts[sandwichId] = (cartCounts[sandwichId] || 0) + item.quantity;
+      }
+    }
+
+    return cartCounts;
+  },
+});

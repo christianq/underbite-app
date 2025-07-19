@@ -1,9 +1,11 @@
 "use client";
 
 import { useState } from "react";
-import { Plus, Minus, ShoppingCart, Star } from "lucide-react";
+import { Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { storeConfig } from "@/lib/config";
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
 
 interface Sandwich {
   _id: string;
@@ -21,12 +23,12 @@ interface SandwichCardProps {
 
 export function SandwichCard({ sandwich }: SandwichCardProps) {
   const [quantity, setQuantity] = useState(1);
-  const [isAdding, setIsAdding] = useState(false);
   const addToCart = useCartStore((state) => state.addItem);
   const isOutOfStock = sandwich.inventory === 0;
+  const cartCounts = useQuery(api.carts.getCartCounts);
+  const cartCount = cartCounts?.[sandwich._id] || 0;
 
-  const handleAddToCart = async () => {
-    setIsAdding(true);
+  const handleAddToCart = () => {
     addToCart({
       sandwichId: sandwich._id,
       quantity,
@@ -34,7 +36,6 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
       price: sandwich.price,
     });
     setQuantity(1);
-    setTimeout(() => setIsAdding(false), 1000);
   };
 
   const handleQuantityChange = (newQuantity: number) => {
@@ -44,121 +45,82 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
   };
 
   return (
-    <div className="group relative bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden border border-gray-100 hover:border-orange-200">
-      {/* Gradient overlay for visual appeal */}
-      <div className="absolute inset-0 bg-gradient-to-br from-orange-50/20 to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
-
-      {/* Header with name and price */}
-      <div className="relative p-6 pb-4">
-        <div className="flex items-start justify-between mb-3">
-          <h3 className="text-xl font-bold text-gray-900 font-playfair leading-tight flex-1">
-            {sandwich.name}
-          </h3>
-          <div className="flex items-center space-x-1 ml-3">
-            <Star className="w-4 h-4 text-yellow-400 fill-current" />
-            <span className="text-xs font-medium text-gray-600">4.8</span>
-          </div>
+    <div className="bg-white overflow-hidden">
+      {sandwich.image && (
+        <div className="h-48 bg-gray-200 flex items-center justify-center">
+          <img
+            src={sandwich.image}
+            alt={sandwich.name}
+            className="w-full h-full object-cover"
+          />
         </div>
+      )}
 
-        {/* Description with better typography */}
+      <div className="p-4">
+        <h3 className="text-xl font-semibold text-gray-900 mb-2 font-playfair">
+          {sandwich.name}
+        </h3>
+
         {sandwich.description && (
-          <p className="text-gray-600 text-sm leading-relaxed mb-4 line-clamp-2">
-            {sandwich.description}
+          <p className="text-gray-600 mb-3">{sandwich.description}</p>
+        )}
+
+        <div className="mb-3">
+          <h4 className="text-sm font-medium text-gray-700 mb-1">Ingredients:</h4>
+          <p className="text-sm text-gray-600">
+            {sandwich.ingredients.join(", ")}
           </p>
-        )}
-
-        {/* Ingredients with modern styling */}
-        <div className="mb-4">
-          <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide mb-2">
-            Ingredients
-          </h4>
-          <div className="flex flex-wrap gap-1">
-            {sandwich.ingredients.map((ingredient, index) => (
-              <span
-                key={index}
-                className="inline-block px-2 py-1 text-xs bg-gray-100 text-gray-700 rounded-full font-medium"
-              >
-                {ingredient}
-              </span>
-            ))}
-          </div>
         </div>
 
-        {/* Price and availability with enhanced styling */}
         <div className="flex items-center justify-between mb-4">
-          <div className="flex items-baseline space-x-1">
-            <span className="text-3xl font-bold text-orange-600">
-              {storeConfig.currencySymbol}{sandwich.price.toFixed(2)}
-            </span>
-            <span className="text-sm text-gray-500">each</span>
-          </div>
-          <div className={`px-3 py-1 rounded-full text-xs font-medium ${
-            sandwich.inventory > 10
-              ? 'bg-green-100 text-green-700'
-              : sandwich.inventory > 0
-                ? 'bg-yellow-100 text-yellow-700'
-                : 'bg-red-100 text-red-700'
-          }`}>
+          <span className="text-2xl font-bold text-orange-600">
+            {storeConfig.currencySymbol}{sandwich.price.toFixed(2)}
+          </span>
+          <span className="text-sm text-gray-500">
             {sandwich.inventory > 0 ? `${sandwich.inventory} available` : "Sold out"}
-          </div>
+          </span>
         </div>
 
-        {/* Quantity selector with modern design */}
-        {!isOutOfStock && (
-          <div className="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-xl">
-            <span className="text-sm font-medium text-gray-700">Quantity</span>
-            <div className="flex items-center space-x-3">
-              <button
-                onClick={() => handleQuantityChange(quantity - 1)}
-                disabled={quantity <= 1}
-                className="p-2 rounded-full bg-white shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
-              >
-                <Minus size={16} className="text-gray-600" />
-              </button>
-              <span className="w-8 text-center font-bold text-gray-900 text-lg">
-                {quantity}
-              </span>
-              <button
-                onClick={() => handleQuantityChange(quantity + 1)}
-                disabled={quantity >= sandwich.inventory}
-                className="p-2 rounded-full bg-white shadow-sm hover:shadow-md disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-200 hover:scale-105"
-              >
-                <Plus size={16} className="text-gray-600" />
-              </button>
-            </div>
+        {cartCount > 0 && (
+          <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded-lg">
+            <p className="text-sm text-orange-800 font-medium">
+              🤠 Better lasso it now, there are {cartCount} in other pilgrims' carts!
+            </p>
           </div>
         )}
 
-        {/* Enhanced add to cart button */}
+        {!isOutOfStock && (
+          <div className="flex items-center space-x-2 mb-4">
+            <button
+              onClick={() => handleQuantityChange(quantity - 1)}
+              disabled={quantity <= 1}
+              className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Minus size={16} />
+            </button>
+            <span className="w-8 text-center font-medium">{quantity}</span>
+            <button
+              onClick={() => handleQuantityChange(quantity + 1)}
+              disabled={quantity >= sandwich.inventory}
+              className="p-1 rounded-full bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed"
+            >
+              <Plus size={16} />
+            </button>
+          </div>
+        )}
+
         <button
           onClick={handleAddToCart}
-          disabled={isOutOfStock || isAdding}
-          className={`w-full py-4 px-6 rounded-xl font-semibold transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] ${
+          disabled={isOutOfStock}
+          className={`w-full py-2 px-4 rounded-lg font-medium transition-colors ${
             isOutOfStock
-              ? "bg-gray-200 text-gray-500 cursor-not-allowed"
-              : isAdding
-                ? "bg-green-600 text-white"
-                : "bg-gradient-to-r from-orange-600 to-orange-700 text-white hover:from-orange-700 hover:to-orange-800 shadow-lg hover:shadow-xl"
+              ? "bg-gray-300 text-gray-500 cursor-not-allowed"
+              : "bg-orange-600 text-white hover:bg-orange-700"
           }`}
         >
-          <div className="flex items-center justify-center space-x-2">
-            {isAdding ? (
-              <>
-                <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                <span>Added!</span>
-              </>
-            ) : (
-              <>
-                <ShoppingCart size={18} />
-                <span>{isOutOfStock ? "Sold Out" : "Add to Cart"}</span>
-              </>
-            )}
-          </div>
+          {isOutOfStock ? "Sold Out" : "Add to Cart"}
         </button>
       </div>
-
-      {/* Subtle bottom accent */}
-      <div className="h-1 bg-gradient-to-r from-orange-400 to-orange-600 opacity-0 group-hover:opacity-100 transition-opacity duration-300" />
     </div>
   );
 }
