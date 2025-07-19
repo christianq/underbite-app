@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Plus, Minus } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { storeConfig } from "@/lib/config";
-import { useQuery } from "convex/react";
+import { useQuery, useMutation } from "convex/react";
 import { api } from "../../convex/_generated/api";
 
 interface Sandwich {
@@ -24,17 +24,27 @@ interface SandwichCardProps {
 export function SandwichCard({ sandwich }: SandwichCardProps) {
   const [quantity, setQuantity] = useState(1);
   const addToCart = useCartStore((state) => state.addItem);
+  const addToCartMutation = useMutation(api.carts.addToCart);
   const isOutOfStock = sandwich.inventory === 0;
   const cartCounts = useQuery(api.carts.getCartCounts);
   const cartCount = cartCounts?.[sandwich._id] || 0;
 
-  const handleAddToCart = () => {
+  const handleAddToCart = async () => {
+    // Add to local cart store
     addToCart({
       sandwichId: sandwich._id,
       quantity,
       name: sandwich.name,
       price: sandwich.price,
     });
+
+    // Add to Convex database for cart counter
+    await addToCartMutation({
+      sandwichId: sandwich._id as any, // Type assertion for Convex ID
+      quantity,
+      sessionId: `session-${Date.now()}`, // Generate unique session ID
+    });
+
     setQuantity(1);
   };
 
