@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+
 import { Trash2, Plus, Minus, ArrowRight } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { useMutation, useAction } from "convex/react";
@@ -10,7 +10,7 @@ import { api } from "../../../convex/_generated/api";
 import { storeConfig } from "@/lib/config";
 
 export default function CartPage() {
-  const router = useRouter();
+
   const [isCheckingOut, setIsCheckingOut] = useState(false);
   const { items, updateQuantity, removeItem, clearCart, getTotal } = useCartStore();
   const createOrder = useMutation(api.orders.createOrder);

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Save, Palette, Store, Mail, Clock, Globe, Settings, Copy } from "lucide-react";
+import { useState } from "react";
+import { Store, Mail, Clock, Globe, Settings, Copy } from "lucide-react";
 import { storeConfig } from "@/lib/config";
 
 interface SettingsForm {
@@ -146,7 +146,7 @@ export default function SettingsPage() {
       await navigator.clipboard.writeText(envVars);
 
       setSaveMessage("✅ Settings copied to clipboard! Paste into your .env.local file and restart your dev server.");
-    } catch (error) {
+    } catch {
       setSaveMessage("❌ Error copying to clipboard. Please try again.");
     } finally {
       setIsSaving(false);
