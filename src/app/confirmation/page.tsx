@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { CheckCircle, ArrowRight } from "lucide-react";
@@ -8,7 +8,7 @@ import { useCartStore } from "@/lib/store";
 import { useMutation } from "convex/react";
 import { api } from "../../../convex/_generated/api";
 
-export default function ConfirmationPage() {
+function ConfirmationContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const [orderStatus, setOrderStatus] = useState<"loading" | "success" | "error">("loading");
@@ -123,5 +123,18 @@ export default function ConfirmationPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ConfirmationPage() {
+  return (
+    <Suspense fallback={
+      <div className="max-w-2xl mx-auto text-center py-12">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-500 mx-auto mb-4"></div>
+        <h1 className="text-2xl font-bold text-gray-900 mb-2">Loading...</h1>
+      </div>
+    }>
+      <ConfirmationContent />
+    </Suspense>
   );
 }
