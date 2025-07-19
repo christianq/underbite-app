@@ -15,10 +15,22 @@ export default function CartPage() {
   const { items, updateQuantity, removeItem, clearCart, getTotal } = useCartStore();
   const createOrder = useMutation(api.orders.createOrder);
   const createCheckoutSession = useAction(api.stripe.createCheckoutSession);
+  const addToCartMutation = useMutation(api.carts.addToCart);
+  const updateCartItemQuantityMutation = useMutation(api.carts.updateCartItemQuantity);
 
-  const handleQuantityChange = (sandwichId: string, newQuantity: number) => {
+  // Generate session ID for this user
+  const sessionId = `session-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`;
+
+    const handleQuantityChange = async (sandwichId: string, newQuantity: number) => {
     if (newQuantity >= 1) {
       updateQuantity(sandwichId, newQuantity);
+
+      // Sync with Convex database for cart counter
+      await updateCartItemQuantityMutation({
+        sandwichId: sandwichId as any,
+        quantity: newQuantity,
+        sessionId: sessionId,
+      });
     }
   };
 
@@ -119,7 +131,15 @@ export default function CartPage() {
                       </div>
 
                       <button
-                        onClick={() => removeItem(item.sandwichId)}
+                        onClick={async () => {
+                          removeItem(item.sandwichId);
+                          // Sync with Convex database for cart counter
+                          await updateCartItemQuantityMutation({
+                            sandwichId: item.sandwichId as any,
+                            quantity: 0,
+                            sessionId: sessionId,
+                          });
+                        }}
                         className="p-2 text-red-500 hover:bg-red-50 rounded-full transition-colors"
                       >
                         <Trash2 size={16} />
@@ -164,7 +184,17 @@ export default function CartPage() {
             </button>
 
             <button
-              onClick={clearCart}
+              onClick={async () => {
+                clearCart();
+                // Sync with Convex database for cart counter - clear all items
+                for (const item of items) {
+                  await updateCartItemQuantityMutation({
+                    sandwichId: item.sandwichId as any,
+                    quantity: 0,
+                    sessionId: sessionId,
+                  });
+                }
+              }}
               className="w-full mt-3 text-gray-600 py-2 px-4 rounded-lg border border-gray-300 hover:bg-gray-50 transition-colors"
             >
               Clear Cart

@@ -135,6 +135,37 @@ export const clearCart = mutation({
   },
 });
 
+export const updateCartItemQuantity = mutation({
+  args: {
+    sessionId: v.string(),
+    sandwichId: v.id("sandwiches"),
+    quantity: v.number(),
+  },
+  handler: async (ctx, args) => {
+    const { sessionId, sandwichId, quantity } = args;
+
+    // Get existing cart
+    const cart = await ctx.db
+      .query("carts")
+      .withIndex("by_session", (q) => q.eq("sessionId", sessionId))
+      .first();
+
+    if (cart) {
+      const updatedItems = cart.items.map((item) =>
+        item.sandwichId === sandwichId
+          ? { ...item, quantity }
+          : item
+      ).filter(item => item.quantity > 0); // Remove items with quantity 0
+
+      return await ctx.db.patch(cart._id, {
+        items: updatedItems,
+        updatedAt: Date.now(),
+      });
+    }
+    return null;
+  },
+});
+
 export const getCartCounts = query({
   args: {
     excludeSessionId: v.optional(v.string()),
