@@ -84,7 +84,7 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
         {cartCount > 0 && (
           <div className="mb-3 p-2 bg-orange-50 border border-orange-200 rounded-lg">
             <p className="text-sm text-orange-800 font-medium">
-              🤠 Better lasso it now, there {cartCount === 1 ? 'is' : 'are'} {cartCount} in other pilgrim{cartCount === 1 ? '' : 's'}' carts!
+              🤠 Better lasso it now, there {cartCount === 1 ? 'is' : 'are'} {cartCount} in other pilgrim{cartCount === 1 ? '' : 's'}' cart{cartCount === 1 ? '' : 's'}!
             </p>
           </div>
         )}
