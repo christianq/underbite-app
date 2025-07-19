@@ -136,14 +136,21 @@ export const clearCart = mutation({
 });
 
 export const getCartCounts = query({
-  args: {},
-  handler: async (ctx) => {
+  args: {
+    excludeSessionId: v.optional(v.string()),
+  },
+  handler: async (ctx, args) => {
     const carts = await ctx.db.query("carts").collect();
 
-    // Count how many of each sandwich are in carts
+    // Count how many of each sandwich are in OTHER users' carts
     const cartCounts: Record<string, number> = {};
 
     for (const cart of carts) {
+      // Skip the current user's cart
+      if (args.excludeSessionId && cart.sessionId === args.excludeSessionId) {
+        continue;
+      }
+
       for (const item of cart.items) {
         const sandwichId = item.sandwichId;
         cartCounts[sandwichId] = (cartCounts[sandwichId] || 0) + item.quantity;

@@ -26,10 +26,13 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
   const addToCart = useCartStore((state) => state.addItem);
   const addToCartMutation = useMutation(api.carts.addToCart);
   const isOutOfStock = sandwich.inventory === 0;
-  const cartCounts = useQuery(api.carts.getCartCounts);
+
+  // Generate a consistent session ID for this user
+  const sessionId = `session-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`;
+  const cartCounts = useQuery(api.carts.getCartCounts, { excludeSessionId: sessionId });
   const cartCount = cartCounts?.[sandwich._id] || 0;
 
-  const handleAddToCart = async () => {
+    const handleAddToCart = async () => {
     // Add to local cart store
     addToCart({
       sandwichId: sandwich._id,
@@ -42,7 +45,7 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
     await addToCartMutation({
       sandwichId: sandwich._id as any, // Type assertion for Convex ID
       quantity,
-      sessionId: `session-${Date.now()}`, // Generate unique session ID
+      sessionId: sessionId, // Use consistent session ID
     });
 
     setQuantity(1);
