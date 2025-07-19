@@ -27,8 +27,8 @@ export function SandwichCard({ sandwich }: SandwichCardProps) {
   const addToCartMutation = useMutation(api.carts.addToCart);
   const isOutOfStock = sandwich.inventory === 0;
 
-  // Generate a consistent session ID for this user
-  const sessionId = `session-${typeof window !== 'undefined' ? window.location.hostname : 'default'}`;
+  // Generate a unique session ID for this user
+  const sessionId = `session-${typeof window !== 'undefined' ? `${window.location.hostname}-${Math.random().toString(36).substr(2, 9)}` : 'default'}`;
   const cartCounts = useQuery(api.carts.getCartCounts, { excludeSessionId: sessionId });
   const cartCount = cartCounts?.[sandwich._id] || 0;
 
