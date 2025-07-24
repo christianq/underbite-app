@@ -26,11 +26,11 @@ export const addToCart = mutation({
   args: {
     userId: v.optional(v.string()),
     sessionId: v.optional(v.string()),
-    sandwichId: v.id("sandwiches"),
+    itemId: v.id("items"),
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const { userId, sessionId, sandwichId, quantity } = args;
+    const { userId, sessionId, itemId, quantity } = args;
 
     // Get existing cart
     let cart = null;
@@ -49,7 +49,7 @@ export const addToCart = mutation({
     if (cart) {
       // Update existing cart
       const existingItemIndex = cart.items.findIndex(
-        (item) => item.sandwichId === sandwichId
+        (item) => item.itemId === itemId
       );
 
       const updatedItems = [...cart.items];
@@ -59,7 +59,7 @@ export const addToCart = mutation({
           quantity: updatedItems[existingItemIndex].quantity + quantity,
         };
       } else {
-        updatedItems.push({ sandwichId, quantity });
+        updatedItems.push({ itemId, quantity });
       }
 
       return await ctx.db.patch(cart._id, {
@@ -71,7 +71,7 @@ export const addToCart = mutation({
       return await ctx.db.insert("carts", {
         userId,
         sessionId,
-        items: [{ sandwichId, quantity }],
+        items: [{ itemId, quantity }],
         updatedAt: Date.now(),
       });
     }
@@ -81,7 +81,7 @@ export const addToCart = mutation({
 export const updateCartItem = mutation({
   args: {
     cartId: v.id("carts"),
-    sandwichId: v.id("sandwiches"),
+    itemId: v.id("items"),
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
@@ -91,7 +91,7 @@ export const updateCartItem = mutation({
     }
 
     const updatedItems = cart.items.map((item) =>
-      item.sandwichId === args.sandwichId
+      item.itemId === args.itemId
         ? { ...item, quantity: args.quantity }
         : item
     );
@@ -106,7 +106,7 @@ export const updateCartItem = mutation({
 export const removeFromCart = mutation({
   args: {
     cartId: v.id("carts"),
-    sandwichId: v.id("sandwiches"),
+    itemId: v.id("items"),
   },
   handler: async (ctx, args) => {
     const cart = await ctx.db.get(args.cartId);
@@ -115,7 +115,7 @@ export const removeFromCart = mutation({
     }
 
     const updatedItems = cart.items.filter(
-      (item) => item.sandwichId !== args.sandwichId
+      (item) => item.itemId !== args.itemId
     );
 
     return await ctx.db.patch(args.cartId, {
@@ -135,14 +135,29 @@ export const clearCart = mutation({
   },
 });
 
+export const clearCartBySession = mutation({
+  args: { sessionId: v.string() },
+  handler: async (ctx, args) => {
+    const cart = await ctx.db
+      .query("carts")
+      .withIndex("by_session", (q) => q.eq("sessionId", args.sessionId))
+      .first();
+
+    if (cart) {
+      return await ctx.db.delete(cart._id);
+    }
+    return null;
+  },
+});
+
 export const updateCartItemQuantity = mutation({
   args: {
     sessionId: v.string(),
-    sandwichId: v.id("sandwiches"),
+    itemId: v.id("items"),
     quantity: v.number(),
   },
   handler: async (ctx, args) => {
-    const { sessionId, sandwichId, quantity } = args;
+    const { sessionId, itemId, quantity } = args;
 
     // Get existing cart
     const cart = await ctx.db
@@ -152,7 +167,7 @@ export const updateCartItemQuantity = mutation({
 
     if (cart) {
       const updatedItems = cart.items.map((item) =>
-        item.sandwichId === sandwichId
+        item.itemId === itemId
           ? { ...item, quantity }
           : item
       ).filter(item => item.quantity > 0); // Remove items with quantity 0
@@ -166,28 +181,28 @@ export const updateCartItemQuantity = mutation({
   },
 });
 
-export const getCartCounts = query({
+export const clearAbandonedCarts = mutation({
   args: {
-    excludeSessionId: v.optional(v.string()),
+    maxAgeMinutes: v.optional(v.number()),
   },
   handler: async (ctx, args) => {
-    const carts = await ctx.db.query("carts").collect();
+    const maxAgeMinutes = args.maxAgeMinutes || 60; // Default 60 minutes (increased from 30)
+    const cutoffTime = Date.now() - (maxAgeMinutes * 60 * 1000);
 
-    // Count how many of each sandwich are in OTHER users' carts
-    const cartCounts: Record<string, number> = {};
+    const carts = await ctx.db.query("carts").collect();
+    let deletedCount = 0;
 
     for (const cart of carts) {
-      // Skip the current user's cart
-      if (args.excludeSessionId && cart.sessionId === args.excludeSessionId) {
-        continue;
-      }
-
-      for (const item of cart.items) {
-        const sandwichId = item.sandwichId;
-        cartCounts[sandwichId] = (cartCounts[sandwichId] || 0) + item.quantity;
+      // Check if cart is older than the cutoff time
+      if (cart.updatedAt && cart.updatedAt < cutoffTime) {
+        await ctx.db.delete(cart._id);
+        deletedCount++;
       }
     }
 
-    return cartCounts;
+    return { deleted: deletedCount };
   },
 });
+
+
+

@@ -1,5 +1,10 @@
-// Whitelabel Configuration
-export const storeConfig = {
+"use client";
+
+import { useQuery } from "convex/react";
+import { api } from "../../convex/_generated/api";
+
+// Fallback configuration from environment variables
+const fallbackConfig = {
   // Store Information
   name: process.env.NEXT_PUBLIC_STORE_NAME || "Cowboy Picnic",
   description: process.env.NEXT_PUBLIC_STORE_DESCRIPTION || "Saddle up for flavor",
@@ -47,6 +52,12 @@ export const storeConfig = {
     loyalty: process.env.NEXT_PUBLIC_ENABLE_LOYALTY === "true",
   },
 
+  // Menu Display
+  menu: {
+    showMenu: process.env.NEXT_PUBLIC_SHOW_MENU !== "false", // Default to true
+    menuMessage: process.env.NEXT_PUBLIC_MENU_MESSAGE || "Our store is currently closed. Please check back soon!",
+  },
+
   // SEO
   meta: {
     title: process.env.NEXT_PUBLIC_META_TITLE || "Cowboy Picnic - Sandwich Ordering",
@@ -54,6 +65,72 @@ export const storeConfig = {
     keywords: process.env.NEXT_PUBLIC_META_KEYWORDS || "sandwiches, cowboy, food delivery, online ordering",
   },
 };
+
+// Hook to get settings from database with fallback
+export const useStoreConfig = () => {
+  const settings = useQuery(api.settings.getSettings);
+
+  if (!settings) {
+    return fallbackConfig;
+  }
+
+  return {
+    // Store Information
+    name: settings.storeName,
+    description: settings.storeDescription,
+    tagline: settings.storeTagline,
+    heroTitle: settings.heroTitle,
+    heroSubtitle: settings.heroSubtitle,
+
+    // Branding
+    logo: settings.storeLogo,
+    primaryColor: settings.primaryColor,
+    accentColor: fallbackConfig.accentColor,
+
+    // Contact Information
+    email: settings.storeEmail,
+    phone: settings.storePhone,
+    address: settings.storeAddress,
+
+    // Business Information
+    currency: settings.currency,
+    currencySymbol: settings.currencySymbol,
+    taxRate: settings.taxRate,
+
+    // Social Media
+    website: settings.website,
+    instagram: settings.instagram,
+    facebook: settings.facebook,
+    twitter: settings.twitter,
+
+    // Operating Hours
+    hours: settings.hours,
+
+    // Features
+    features: {
+      delivery: settings.enableDelivery,
+      pickup: settings.enablePickup,
+      catering: settings.enableCatering,
+      loyalty: settings.enableLoyalty,
+    },
+
+    // Menu Display
+    menu: {
+      showMenu: settings.showMenu,
+      menuMessage: settings.menuMessage,
+    },
+
+    // SEO
+    meta: {
+      title: settings.metaTitle,
+      description: settings.metaDescription,
+      keywords: settings.metaKeywords,
+    },
+  };
+};
+
+// Legacy export for backward compatibility
+export const storeConfig = fallbackConfig;
 
 // Helper function to get CSS classes based on primary color
 export const getColorClasses = () => {

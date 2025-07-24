@@ -4,10 +4,7 @@ import { v } from "convex/values";
 export const getItems = query({
   args: {},
   handler: async (ctx) => {
-    return await ctx.db
-      .query("items")
-      .withIndex("by_active", (q) => q.eq("isActive", true))
-      .collect();
+    return await ctx.db.query("items").collect();
   },
 });
 
@@ -26,11 +23,15 @@ export const createItem = mutation({
     inventory: v.number(),
     image: v.optional(v.string()),
     description: v.optional(v.string()),
+    isActive: v.boolean(),
+    categoryId: v.optional(v.id("categories")),
+    showQty: v.optional(v.boolean()),
+    emoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     return await ctx.db.insert("items", {
       ...args,
-      isActive: true,
+      showQty: args.showQty !== undefined ? args.showQty : true,
     });
   },
 });
@@ -45,6 +46,9 @@ export const updateItem = mutation({
     image: v.optional(v.string()),
     description: v.optional(v.string()),
     isActive: v.optional(v.boolean()),
+    categoryId: v.optional(v.id("categories")),
+    showQty: v.optional(v.boolean()),
+    emoji: v.optional(v.string()),
   },
   handler: async (ctx, args) => {
     const { id, ...updates } = args;
@@ -56,21 +60,5 @@ export const deleteItem = mutation({
   args: { id: v.id("items") },
   handler: async (ctx, args) => {
     return await ctx.db.delete(args.id);
-  },
-});
-
-export const decrementInventory = mutation({
-  args: {
-    itemId: v.id("items"),
-    quantity: v.number(),
-  },
-  handler: async (ctx, args) => {
-    const item = await ctx.db.get(args.itemId);
-    if (!item) {
-      throw new Error("Item not found");
-    }
-
-    const newInventory = Math.max(0, item.inventory - args.quantity);
-    return await ctx.db.patch(args.itemId, { inventory: newInventory });
   },
 });

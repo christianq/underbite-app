@@ -41,7 +41,7 @@ export const createOrder = mutation({
   args: {
     userId: v.optional(v.string()),
     items: v.array(v.object({
-      sandwichId: v.id("sandwiches"),
+      itemId: v.id("items"),
       quantity: v.number(),
       price: v.number(),
       name: v.string(),
@@ -90,11 +90,14 @@ export const updateOrderStatus = mutation({
     if (status === "paid" && order.status !== "paid") {
       // Decrement inventory only when order becomes paid
       for (const item of order.items) {
-        const sandwich = await ctx.db.get(item.sandwichId);
-        if (sandwich) {
-          await ctx.db.patch(item.sandwichId, {
-            inventory: Math.max(0, sandwich.inventory - item.quantity),
-          });
+        const id = item.itemId;
+        if (id) {
+          const dbItem = await ctx.db.get(id);
+          if (dbItem) {
+            await ctx.db.patch(id, {
+              inventory: Math.max(0, dbItem.inventory - item.quantity),
+            });
+          }
         }
       }
     }
@@ -127,11 +130,14 @@ export const processOrderPayment = mutation({
 
     // Decrement inventory for each item (only for paid orders)
     for (const item of order.items) {
-      const sandwich = await ctx.db.get(item.sandwichId);
-      if (sandwich) {
-        await ctx.db.patch(item.sandwichId, {
-          inventory: Math.max(0, sandwich.inventory - item.quantity),
-        });
+      const id = item.itemId;
+      if (id) {
+        const dbItem = await ctx.db.get(id);
+        if (dbItem) {
+          await ctx.db.patch(id, {
+            inventory: Math.max(0, dbItem.inventory - item.quantity),
+          });
+        }
       }
     }
 
@@ -157,14 +163,24 @@ export const decrementInventoryForOrder = mutation({
 
     // Decrement inventory for each item
     for (const item of order.items) {
-      const sandwich = await ctx.db.get(item.sandwichId);
-      if (sandwich) {
-        await ctx.db.patch(item.sandwichId, {
-          inventory: Math.max(0, sandwich.inventory - item.quantity),
-        });
+      const id = item.itemId;
+      if (id) {
+        const dbItem = await ctx.db.get(id);
+        if (dbItem) {
+          await ctx.db.patch(id, {
+            inventory: Math.max(0, dbItem.inventory - item.quantity),
+          });
+        }
       }
     }
 
     return order;
+  },
+});
+
+export const deleteOrder = mutation({
+  args: { id: v.id("orders") },
+  handler: async (ctx, args) => {
+    return await ctx.db.delete(args.id);
   },
 });

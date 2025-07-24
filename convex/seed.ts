@@ -1,9 +1,9 @@
 import { mutation } from "./_generated/server";
 
-export const seedSandwiches = mutation({
+export const seedItems = mutation({
   args: {},
   handler: async (ctx) => {
-    const sandwiches = [
+    const items = [
       {
         name: "Classic Club",
         ingredients: ["Turkey", "Bacon", "Lettuce", "Tomato", "Mayo"],
@@ -55,8 +55,8 @@ export const seedSandwiches = mutation({
     ];
 
     const results = [];
-    for (const sandwich of sandwiches) {
-      const id = await ctx.db.insert("sandwiches", sandwich);
+    for (const item of items) {
+      const id = await ctx.db.insert("items", item);
       results.push(id);
     }
 

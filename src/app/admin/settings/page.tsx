@@ -1,8 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Store, Mail, Clock, Globe, Settings, Copy } from "lucide-react";
-import { storeConfig } from "@/lib/config";
+import { useQuery, useMutation } from "convex/react";
+import { api } from "../../../../convex/_generated/api";
 
 interface SettingsForm {
   // Store Identity
@@ -51,36 +52,88 @@ interface SettingsForm {
   enablePickup: boolean;
   enableCatering: boolean;
   enableLoyalty: boolean;
+
+  // Menu Display
+  showMenu: boolean;
+  menuMessage: string;
 }
 
 export default function SettingsPage() {
+  const settings = useQuery(api.settings.getSettings);
+  const updateSettings = useMutation(api.settings.updateSettings);
+
   const [form, setForm] = useState<SettingsForm>({
-    storeName: storeConfig.name,
-    storeDescription: storeConfig.description,
-    storeTagline: storeConfig.tagline,
-    heroTitle: storeConfig.heroTitle,
-    heroSubtitle: storeConfig.heroSubtitle,
-    storeLogo: storeConfig.logo,
-    primaryColor: storeConfig.primaryColor,
-    storeEmail: storeConfig.email,
-    storePhone: storeConfig.phone,
-    storeAddress: storeConfig.address,
-    currency: storeConfig.currency,
-    currencySymbol: storeConfig.currencySymbol,
-    taxRate: storeConfig.taxRate.toString(),
-    hours: storeConfig.hours,
-    metaTitle: storeConfig.meta.title,
-    metaDescription: storeConfig.meta.description,
-    metaKeywords: storeConfig.meta.keywords,
-    website: storeConfig.website,
-    instagram: storeConfig.instagram,
-    facebook: storeConfig.facebook,
-    twitter: storeConfig.twitter,
-    enableDelivery: storeConfig.features.delivery,
-    enablePickup: storeConfig.features.pickup,
-    enableCatering: storeConfig.features.catering,
-    enableLoyalty: storeConfig.features.loyalty,
+    storeName: "",
+    storeDescription: "",
+    storeTagline: "",
+    heroTitle: "",
+    heroSubtitle: "",
+    storeLogo: "",
+    primaryColor: "",
+    storeEmail: "",
+    storePhone: "",
+    storeAddress: "",
+    currency: "",
+    currencySymbol: "",
+    taxRate: "",
+    hours: {
+      monday: "",
+      tuesday: "",
+      wednesday: "",
+      thursday: "",
+      friday: "",
+      saturday: "",
+      sunday: "",
+    },
+    metaTitle: "",
+    metaDescription: "",
+    metaKeywords: "",
+    website: "",
+    instagram: "",
+    facebook: "",
+    twitter: "",
+    enableDelivery: true,
+    enablePickup: true,
+    enableCatering: false,
+    enableLoyalty: false,
+    showMenu: true,
+    menuMessage: "",
   });
+
+  // Load settings from database when available
+  useEffect(() => {
+    if (settings) {
+      setForm({
+        storeName: settings.storeName,
+        storeDescription: settings.storeDescription,
+        storeTagline: settings.storeTagline,
+        heroTitle: settings.heroTitle,
+        heroSubtitle: settings.heroSubtitle,
+        storeLogo: settings.storeLogo,
+        primaryColor: settings.primaryColor,
+        storeEmail: settings.storeEmail,
+        storePhone: settings.storePhone,
+        storeAddress: settings.storeAddress,
+        currency: settings.currency,
+        currencySymbol: settings.currencySymbol,
+        taxRate: settings.taxRate.toString(),
+        hours: settings.hours,
+        metaTitle: settings.metaTitle,
+        metaDescription: settings.metaDescription,
+        metaKeywords: settings.metaKeywords,
+        website: settings.website,
+        instagram: settings.instagram,
+        facebook: settings.facebook,
+        twitter: settings.twitter,
+        enableDelivery: settings.enableDelivery,
+        enablePickup: settings.enablePickup,
+        enableCatering: settings.enableCatering,
+        enableLoyalty: settings.enableLoyalty,
+        showMenu: settings.showMenu,
+        menuMessage: settings.menuMessage,
+      });
+    }
+  }, [settings]);
 
   const [isSaving, setIsSaving] = useState(false);
   const [saveMessage, setSaveMessage] = useState("");
@@ -107,47 +160,40 @@ export default function SettingsPage() {
     setSaveMessage("");
 
     try {
-      // Generate environment variables
-      const envVars = [
-        `NEXT_PUBLIC_STORE_NAME="${form.storeName}"`,
-        `NEXT_PUBLIC_STORE_DESCRIPTION="${form.storeDescription}"`,
-        `NEXT_PUBLIC_STORE_TAGLINE="${form.storeTagline}"`,
-        `NEXT_PUBLIC_HERO_TITLE="${form.heroTitle}"`,
-        `NEXT_PUBLIC_HERO_SUBTITLE="${form.heroSubtitle}"`,
-        `NEXT_PUBLIC_STORE_LOGO="${form.storeLogo}"`,
-        `NEXT_PUBLIC_PRIMARY_COLOR="${form.primaryColor}"`,
-        `NEXT_PUBLIC_STORE_EMAIL="${form.storeEmail}"`,
-        `NEXT_PUBLIC_STORE_PHONE="${form.storePhone}"`,
-        `NEXT_PUBLIC_STORE_ADDRESS="${form.storeAddress}"`,
-        `NEXT_PUBLIC_CURRENCY="${form.currency}"`,
-        `NEXT_PUBLIC_CURRENCY_SYMBOL="${form.currencySymbol}"`,
-        `NEXT_PUBLIC_TAX_RATE="${form.taxRate}"`,
-        `NEXT_PUBLIC_HOURS_MONDAY="${form.hours.monday}"`,
-        `NEXT_PUBLIC_HOURS_TUESDAY="${form.hours.tuesday}"`,
-        `NEXT_PUBLIC_HOURS_WEDNESDAY="${form.hours.wednesday}"`,
-        `NEXT_PUBLIC_HOURS_THURSDAY="${form.hours.thursday}"`,
-        `NEXT_PUBLIC_HOURS_FRIDAY="${form.hours.friday}"`,
-        `NEXT_PUBLIC_HOURS_SATURDAY="${form.hours.saturday}"`,
-        `NEXT_PUBLIC_HOURS_SUNDAY="${form.hours.sunday}"`,
-        `NEXT_PUBLIC_META_TITLE="${form.metaTitle}"`,
-        `NEXT_PUBLIC_META_DESCRIPTION="${form.metaDescription}"`,
-        `NEXT_PUBLIC_META_KEYWORDS="${form.metaKeywords}"`,
-        `NEXT_PUBLIC_STORE_WEBSITE="${form.website}"`,
-        `NEXT_PUBLIC_INSTAGRAM="${form.instagram}"`,
-        `NEXT_PUBLIC_FACEBOOK="${form.facebook}"`,
-        `NEXT_PUBLIC_TWITTER="${form.twitter}"`,
-        `NEXT_PUBLIC_ENABLE_DELIVERY="${form.enableDelivery}"`,
-        `NEXT_PUBLIC_ENABLE_PICKUP="${form.enablePickup}"`,
-        `NEXT_PUBLIC_ENABLE_CATERING="${form.enableCatering}"`,
-        `NEXT_PUBLIC_ENABLE_LOYALTY="${form.enableLoyalty}"`,
-      ].join('\n');
+      await updateSettings({
+        storeName: form.storeName,
+        storeDescription: form.storeDescription,
+        storeTagline: form.storeTagline,
+        heroTitle: form.heroTitle,
+        heroSubtitle: form.heroSubtitle,
+        storeLogo: form.storeLogo,
+        primaryColor: form.primaryColor,
+        storeEmail: form.storeEmail,
+        storePhone: form.storePhone,
+        storeAddress: form.storeAddress,
+        currency: form.currency,
+        currencySymbol: form.currencySymbol,
+        taxRate: parseFloat(form.taxRate),
+        hours: form.hours,
+        metaTitle: form.metaTitle,
+        metaDescription: form.metaDescription,
+        metaKeywords: form.metaKeywords,
+        website: form.website,
+        instagram: form.instagram,
+        facebook: form.facebook,
+        twitter: form.twitter,
+        enableDelivery: form.enableDelivery,
+        enablePickup: form.enablePickup,
+        enableCatering: form.enableCatering,
+        enableLoyalty: form.enableLoyalty,
+        showMenu: form.showMenu,
+        menuMessage: form.menuMessage,
+      });
 
-      // Copy to clipboard
-      await navigator.clipboard.writeText(envVars);
-
-      setSaveMessage("✅ Settings copied to clipboard! Paste into your .env.local file and restart your dev server.");
-    } catch {
-      setSaveMessage("❌ Error copying to clipboard. Please try again.");
+      setSaveMessage("✅ Settings saved successfully!");
+    } catch (error) {
+      console.error("Error saving settings:", error);
+      setSaveMessage("❌ Error saving settings. Please try again.");
     } finally {
       setIsSaving(false);
     }
@@ -182,7 +228,7 @@ export default function SettingsPage() {
           className="flex items-center space-x-2 bg-orange-600 text-white px-6 py-3 rounded-lg hover:bg-orange-700 disabled:opacity-50 transition-colors"
         >
           <Copy size={20} />
-          <span>{isSaving ? "Copying..." : "Copy Settings"}</span>
+          <span>{isSaving ? "Saving..." : "Save Settings"}</span>
         </button>
       </div>
 
@@ -572,15 +618,51 @@ export default function SettingsPage() {
             </div>
           </div>
         </div>
+
+        {/* Menu Display Settings */}
+        <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="flex items-center space-x-2 mb-6">
+            <Settings size={24} className="text-orange-600" />
+            <h2 className="text-xl font-semibold text-gray-900 font-playfair">Store Availability</h2>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Store Status
+              </label>
+              <select
+                value={form.showMenu ? "true" : "false"}
+                onChange={(e) => handleInputChange("showMenu", e.target.value === "true")}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+              >
+                <option value="true">Store Open</option>
+                <option value="false">Store Closed</option>
+              </select>
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Store Closed Message
+              </label>
+              <textarea
+                value={form.menuMessage}
+                onChange={(e) => handleInputChange("menuMessage", e.target.value)}
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500"
+                rows={3}
+                placeholder="Message to display when store is closed"
+              />
+            </div>
+          </div>
+        </div>
       </div>
 
       <div className="mt-8 bg-blue-50 border border-blue-200 rounded-lg p-6">
         <h3 className="text-lg font-semibold text-blue-900 mb-2">How to Apply Changes</h3>
         <ol className="text-blue-800 space-y-1">
-          <li>1. Click "Copy Settings" to copy the environment variables to your clipboard</li>
-          <li>2. Paste the content into your .env.local file (replace existing content)</li>
-          <li>3. Restart your development server: <code className="bg-blue-100 px-2 py-1 rounded">npm run dev</code></li>
-          <li>4. Your store will now use the new settings!</li>
+          <li>1. Click "Save Settings" to save your changes to the database.</li>
+          <li>2. Your store will automatically reload with the new settings.</li>
+          <li>3. No need to restart your dev server.</li>
         </ol>
       </div>
     </div>

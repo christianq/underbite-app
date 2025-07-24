@@ -2,6 +2,7 @@
 
 import { ConvexProvider, convex } from "@/lib/convex";
 import { Navbar } from "@/components/Navbar";
+import { CartCleanup } from "@/components/CartCleanup";
 
 interface ConvexProviderWrapperProps {
   children: React.ReactNode;
@@ -10,6 +11,7 @@ interface ConvexProviderWrapperProps {
 export function ConvexProviderWrapper({ children }: ConvexProviderWrapperProps) {
   return (
     <ConvexProvider client={convex}>
+      <CartCleanup />
       <Navbar />
       {children}
     </ConvexProvider>

@@ -14,9 +14,12 @@ import type {
   FunctionReference,
 } from "convex/server";
 import type * as carts from "../carts.js";
+import type * as categories from "../categories.js";
+import type * as items from "../items.js";
 import type * as orders from "../orders.js";
 import type * as sandwiches from "../sandwiches.js";
 import type * as seed from "../seed.js";
+import type * as settings from "../settings.js";
 import type * as stripe from "../stripe.js";
 
 /**
@@ -29,9 +32,12 @@ import type * as stripe from "../stripe.js";
  */
 declare const fullApi: ApiFromModules<{
   carts: typeof carts;
+  categories: typeof categories;
+  items: typeof items;
   orders: typeof orders;
   sandwiches: typeof sandwiches;
   seed: typeof seed;
+  settings: typeof settings;
   stripe: typeof stripe;
 }>;
 export declare const api: FilterApi<

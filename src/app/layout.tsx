@@ -2,7 +2,6 @@ import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ConvexProviderWrapper } from "@/components/ConvexProviderWrapper";
-import { storeConfig } from "@/lib/config";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -15,8 +14,8 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: storeConfig.meta.title,
-  description: storeConfig.meta.description,
+  title: "Cowboy Picnic - Sandwich Ordering",
+  description: "Saddle up for flavor with our cowboy-themed sandwiches",
 };
 
 export default function RootLayout({
