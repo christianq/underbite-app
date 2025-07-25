@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { ShoppingCart, Home, User, HelpCircle } from "lucide-react";
+import { ShoppingCart, Home, User, HelpCircle, Users } from "lucide-react";
 import { useCartStore } from "@/lib/store";
 import { useState, useEffect } from "react";
 import { useStoreConfig, getColorClasses } from "@/lib/config";
@@ -50,6 +50,16 @@ export function Navbar() {
               <HelpCircle size={20} />
               <span>Help</span>
             </Link>
+
+            {storeConfig.features.catering && (
+              <Link
+                href="/catering"
+                className="flex items-center space-x-1 text-gray-600 hover:text-gray-900 transition-colors cursor-pointer"
+              >
+                <Users size={20} />
+                <span>Catering</span>
+              </Link>
+            )}
 
             <Link
               href="/cart"
