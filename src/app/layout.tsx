@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Playfair_Display, Source_Sans_3 } from "next/font/google";
 import "./globals.css";
 import { ConvexProviderWrapper } from "@/components/ConvexProviderWrapper";
+import { DynamicMeta } from "@/components/DynamicMeta";
 
 const playfair = Playfair_Display({
   subsets: ["latin"],
@@ -14,8 +15,12 @@ const sourceSans = Source_Sans_3({
 });
 
 export const metadata: Metadata = {
-  title: "Cowboy Picnic - Sandwich Ordering",
-  description: "Saddle up for flavor with our cowboy-themed sandwiches",
+  title: {
+    default: process.env.NEXT_PUBLIC_META_TITLE || "Cowboy Jane's - Sandwich Ordering",
+    template: "%s | Cowboy Jane's"
+  },
+  description: process.env.NEXT_PUBLIC_META_DESCRIPTION || "Saddle up for flavor with our cowboy-themed sandwiches",
+  keywords: process.env.NEXT_PUBLIC_META_KEYWORDS || "sandwiches, cowboy, food delivery, online ordering",
 };
 
 export default function RootLayout({
@@ -27,6 +32,7 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${playfair.variable} ${sourceSans.variable} ${sourceSans.className}`}>
         <ConvexProviderWrapper>
+          <DynamicMeta />
           <div className="min-h-screen bg-gray-50">
             <main className="container mx-auto px-4 py-8">
         {children}
