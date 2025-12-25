@@ -159,7 +159,7 @@ export const updateSettings = mutation({
           saturday: "10:00 AM - 10:00 PM",
           sunday: "10:00 AM - 8:00 PM",
         },
-        metaTitle: "Cowboy Picnic - Sandwich Ordering",
+        metaTitle: "underbite",
         metaDescription: "Saddle up for flavor with our cowboy-themed sandwiches",
         metaKeywords: "sandwiches, cowboy, food delivery, online ordering",
         website: "https://underbite.com",

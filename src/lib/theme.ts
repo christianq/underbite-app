@@ -54,7 +54,7 @@ export const theme = {
   // Components
   components: {
     page: {
-      wrapper: 'min-h-screen bg-[#f4f0e3]',
+              wrapper: 'min-h-screen bg-transparent',
       container: 'max-w-4xl mx-auto px-4 py-8',
       title: 'text-3xl font-bold text-gray-900 mb-8',
     },
@@ -78,7 +78,7 @@ export const theme = {
 
   // Layout
   layout: {
-    pageWrapper: 'min-h-screen bg-[#f4f0e3]',
+          pageWrapper: 'min-h-screen bg-transparent',
     pageContainer: 'max-w-4xl mx-auto px-4 py-8',
     sectionSpacing: 'space-y-8',
     cardSpacing: 'space-y-6',
